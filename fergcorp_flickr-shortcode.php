@@ -43,41 +43,54 @@ $fergcorp_flickrShortcode_apiKey = "bc5cb4b74f2028637db9c4a36f9bdb01";
 */
 function fergcorp_flickrShortcode($photoID){
 	global $fergcorp_flickrShortcode_apiKey;
+	
 	require_once("phpFlickr.php");
 	
 	$f = new phpFlickr($fergcorp_flickrShortcode_apiKey);
+	
 		
 	//$flickr->enableCache("db", "mysql://" . DB_USER . ":" . DB_PASSWORD . "@" . DB_HOST . "/" . DB_NAME, 3600, wp_fergcorp_flickrShortcode );
 	
 	$f->enableCache("fs", dirname(__FILE__)."/phpFlickrCache", 15552000);
 
+
+	//API calls
+	$photoInfo = $f->photos_getInfo($photoID);
 	$photoSizes = $f->photos_getSizes($photoID);
 	$photoExif = $f->photos_getExif($photoID);
-	$photoInfo = $f->photos_getInfo($photoID);
 	$photoLocation = $f->photos_geo_getLocation($photoID);
 
 	foreach($photoExif['exif'] as $photo){
 		$exif[$photo['tag']] = $photo['raw'];
 	}
 
+	//Process the sizes, grab the medium one
+	$photoSizesArrIt = new RecursiveIteratorIterator(new RecursiveArrayIterator($photoSizes));
 
+	 foreach ($photoSizesArrIt as $sub) {
+	    $subArray = $photoSizesArrIt->getSubIterator();
+	    if ($subArray['label'] === 'Medium') {
+	        $photoSize[] = iterator_to_array($subArray);
+	    }
+	}
 	
-	$size = 3;
+	//Grab the URL, width, and height for the medium size
+	$imageURL = $photoSize[0]["source"];
+	$imageWidth = $photoSize[0]["width"];
+	$imageHeight = $photoSize[0]["height"];
 	
-	$imageURL = $photoSizes[$size]["source"];
-	$imageWidth = $photoSizes[$size]["width"];
-	$imageHeight = $photoSizes[$size]["height"];
-	$linkURL = $photoInfo["urls"]["url"][0]["_content"];
-	$title = $photoInfo["title"];
-	$author = $photoInfo["owner"]["realname"];
+	$linkURL = $photoInfo["photo"]["urls"]["url"][0]["_content"];
+	$title = $photoInfo["photo"]["title"];
+	$author = $photoInfo["photo"]["owner"]["realname"];
 	
-	//$toReturn = "<div class='wp-caption alignnone' style='width: " . ($imageWidth+10) ."px'>";
-	
-	$toReturn .= "<a href='$linkURL' title='$title by $author'><img src='$imageURL' width='$imageWidth' height='$imageHeight' alt='$title' style='border:solid black 1px !important' /></a>\n";
+	$toReturn .= "<a href='$linkURL' title='$title by $author'>";
+	$toReturn .= "<img src='$imageURL' width='$imageWidth' height='$imageHeight' alt='$title' style='border:solid black 1px !important' />";
+	$toReturn .= "</a>\n";
+
+	//return "<p>" . $toReturn . "</p>";
 
 	$exifData = "";
 	
-	//print_r($exif);
 	
 	if(isset($exif['FocalLength'])){
 		$exifData .= $exif['FocalLength'] . " || ";
@@ -113,8 +126,26 @@ function fergcorp_flickrShortcode($photoID){
 	//$toReturn .= "<p class='wp-caption-text'>" . $exifData . "</p></div>"; 
 	
 	return "<p>" . $toReturn . "</p>";
+
 		
 }
+
+
+function fergcorp_flickrShortcode_buildPhotoURL($photoID, $size = "medium"){
+	$f = fergcorp_flickrShortcode_init();
+	$photoInfo = $f->photos_getInfo($photoID);
+	return $f->buildPhotoURL($photoInfo["photo"], $size);
+}
+
+function fergcorp_flickrShortcode_init(){
+	global $fergcorp_flickrShortcode_apiKey;
+	require_once("phpFlickr.php");
+	$f = new phpFlickr($fergcorp_flickrShortcode_apiKey);
+	$f->enableCache("fs", dirname(__FILE__)."/phpFlickrCache", 15552000);
+	return $f;
+}
+
+
 
 
 /**
