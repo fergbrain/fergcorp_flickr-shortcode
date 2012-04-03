@@ -53,7 +53,6 @@ function fergcorp_flickrShortcode($photoID){
 	
 	$f->enableCache("fs", dirname(__FILE__)."/phpFlickrCache", 15552000);
 
-
 	//API calls
 	$photoInfo = $f->photos_getInfo($photoID);
 	$photoSizes = $f->photos_getSizes($photoID);
@@ -83,7 +82,7 @@ function fergcorp_flickrShortcode($photoID){
 	$title = $photoInfo["photo"]["title"];
 	$author = $photoInfo["photo"]["owner"]["realname"];
 	
-	$toReturn .= "<a href='$linkURL' title='$title by $author'>";
+	$toReturn = "<a href='$linkURL' title='$title by $author'>";
 	$toReturn .= "<img src='$imageURL' width='$imageWidth' height='$imageHeight' alt='$title' style='border:solid black 1px !important' />";
 	$toReturn .= "</a>\n";
 
