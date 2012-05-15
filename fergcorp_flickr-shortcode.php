@@ -41,7 +41,7 @@ $fergcorp_flickrShortcode_apiKey = "bc5cb4b74f2028637db9c4a36f9bdb01";
  * @author Andrew Ferguson
  * @return string 
 */
-function fergcorp_flickrShortcode($photoID){
+function fergcorp_flickrShortcode($photoID, $size = "medium"){
 	global $fergcorp_flickrShortcode_apiKey;
 	
 	require_once("phpFlickr.php");
@@ -68,7 +68,7 @@ function fergcorp_flickrShortcode($photoID){
 
 	 foreach ($photoSizesArrIt as $sub) {
 	    $subArray = $photoSizesArrIt->getSubIterator();
-	    if ($subArray['label'] === 'Medium') {
+	    if (strtolower($subArray['label']) === $size) {
 	        $photoSize[] = iterator_to_array($subArray);
 	    }
 	}
@@ -83,7 +83,7 @@ function fergcorp_flickrShortcode($photoID){
 	$author = $photoInfo["photo"]["owner"]["realname"];
 	
 	$toReturn = "<a href='$linkURL' title='$title by $author'>";
-	$toReturn .= "<img src='$imageURL' width='$imageWidth' height='$imageHeight' alt='$title' style='border:solid black 1px !important' />";
+	$toReturn .= "<img src='$imageURL' width='$imageWidth' height='$imageHeight' alt='$title' />"; //style='border:solid black 1px !important'
 	$toReturn .= "</a>\n";
 
 	//return "<p>" . $toReturn . "</p>";
@@ -124,9 +124,57 @@ function fergcorp_flickrShortcode($photoID){
 	
 	//$toReturn .= "<p class='wp-caption-text'>" . $exifData . "</p></div>"; 
 	
-	return "<p>" . $toReturn . "</p>";
+	return $toReturn;
 
 		
+}
+
+function fergcorp_flickrShortcode_buildPhotoInfo($photoID){
+	$f = fergcorp_flickrShortcode_init();
+	$photoExif = $f->photos_getExif($photoID);
+	$photoLocation = $f->photos_geo_getLocation($photoID);
+	$photoInfo = $f->photos_getInfo($photoID);
+	
+	foreach($photoExif['exif'] as $photo){
+		$exif[$photo['tag']] = $photo['raw'];
+	}
+	
+	
+	if(isset($exif['FocalLength'])){
+		$exifData .= $exif['FocalLength'] . " || ";
+	}
+	if(isset($exif['ExposureTime'])){
+		$exifData .= $exif['ExposureTime'] . " ". (floatval($exif['ExposureTime'])>1?"sec ":NULL) ."|| ";
+	}
+	if(isset($exif['FNumber'])){
+		$exifData .= "f/" . $exif['FNumber'] . " || ";
+	}
+	if(isset($exif['ISO'])){
+		$exifData .= "ISO" . $exif['ISO'] . " || ";
+	}
+	if(isset($exif['Model'])){
+		$exifData .= $exif['Model'] . " || ";
+	}
+
+	$exifData = rtrim($exifData, " || ");
+
+
+	if(isset($photoLocation['location'])){
+		if($exifData != ""){
+			$exifData .= "<br />";
+		}
+		//$GPS = str_replace(' deg', '&deg;', $exif['GPSPosition']);
+		//$exifData .= "<small><a href=\"http://maps.google.com/maps?q=" . urlencode($GPS) . "\">$GPS</a></small>";
+		//print_r($photoLocation);
+		$exifData .= "" . $photoLocation['location']['locality']['_content']. ', ' . $photoLocation['location']['region']['_content']. ', ' . $photoLocation['location']['country']['_content'];
+	}
+
+ 
+	$exifData .= '<br /><a href="' . $photoInfo["photo"]["urls"]["url"][0]["_content"] . '">&#8734</a>';
+	
+	return $exifData;
+	
+	
 }
 
 
@@ -164,7 +212,7 @@ function fergcorp_flickrShortcode_shortcode($atts, $content) {
 	
 	$content = do_shortcode($content);
 	
-	return fergcorp_flickrShortcode($content);
+	return "<p>" . fergcorp_flickrShortcode($content) . "</p>";
 }
 
 add_shortcode('flickr', 'fergcorp_flickrShortcode_shortcode');
