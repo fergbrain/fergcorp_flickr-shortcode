@@ -26,7 +26,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-global $fergcorp_flickrShortcode_apiKey;
+global $fergcorp_flickrShortcode_apiKey, $fergcorp_flickrShortcode_f;
 
 $fergcorp_flickrShortcode_apiKey = "bc5cb4b74f2028637db9c4a36f9bdb01";
 
@@ -39,26 +39,43 @@ $fergcorp_flickrShortcode_apiKey = "bc5cb4b74f2028637db9c4a36f9bdb01";
  * @since 0.1
  * @access public
  * @author Andrew Ferguson
- * @return string 
+ * @return string
 */
-function fergcorp_flickrShortcode($photoID, $size = "medium"){
-	global $fergcorp_flickrShortcode_apiKey;
-	
+
+function fergcorp_flickrShortcode_init(){
+	global $fergcorp_flickrShortcode_apiKey, $fergcorp_flickrShortcode_f;
 	require_once("phpFlickr/phpFlickr.php");
+	$fergcorp_flickrShortcode_f = new phpFlickr($fergcorp_flickrShortcode_apiKey);
+	$fergcorp_flickrShortcode_f->enableCache("fs", dirname(__FILE__)."/phpFlickrCache", 15552000);
+	return $fergcorp_flickrShortcode_f;
+}
 
+fergcorp_flickrShortcode_init();
 
-	$f = new phpFlickr($fergcorp_flickrShortcode_apiKey);
+function fergcorp_flickrShortcode_set($setID, $size = "medium"){
+	global $fergcorp_flickrShortcode_f;
+
+	$setList = $fergcorp_flickrShortcode_f->photosets_getPhotos($setID);
 	
-		
-	//$flickr->enableCache("db", "mysql://" . DB_USER . ":" . DB_PASSWORD . "@" . DB_HOST . "/" . DB_NAME, 3600, wp_fergcorp_flickrShortcode );
-	
-	$f->enableCache("fs", dirname(__FILE__)."/phpFlickrCache", 15552000);
+	$toReturn = '';
+
+	if($setList){
+		foreach($setList['photoset']['photo'] as $photo){
+			$toReturn .= '<p>' . fergcorp_flickrShortcode($photo['id'], $size) . '</p>';
+		}
+	}
+
+	return $toReturn;
+}
+
+function fergcorp_flickrShortcode($photoID, $size = "medium"){
+	global $fergcorp_flickrShortcode_f;
 
 	//API calls
-	$photoInfo = $f->photos_getInfo($photoID);
-	$photoSizes = $f->photos_getSizes($photoID);
-	$photoExif = $f->photos_getExif($photoID);
-	$photoLocation = $f->photos_geo_getLocation($photoID);
+	$photoInfo = $fergcorp_flickrShortcode_f->photos_getInfo($photoID);
+	$photoSizes = $fergcorp_flickrShortcode_f->photos_getSizes($photoID);
+	$photoExif = $fergcorp_flickrShortcode_f->photos_getExif($photoID);
+	$photoLocation = $fergcorp_flickrShortcode_f->photos_geo_getLocation($photoID);
 
 	foreach($photoExif['exif'] as $photo){
 		$exif[$photo['tag']] = $photo['raw'];
@@ -80,7 +97,7 @@ function fergcorp_flickrShortcode($photoID, $size = "medium"){
 	$imageHeight = $photoSize[0]["height"];
 	
 	$linkURL = $photoInfo["photo"]["urls"]["url"][0]["_content"];
-	$title = $photoInfo["photo"]["title"];
+	$title = $photoInfo["photo"]["title"]['_content'];
 	$author = $photoInfo["photo"]["owner"]["realname"];
 	
 	$toReturn = "<a href='$linkURL' title='$title by $author'>";
@@ -185,13 +202,7 @@ function fergcorp_flickrShortcode_buildPhotoURL($photoID, $size = "medium"){
 	return $f->buildPhotoURL($photoInfo["photo"], $size);
 }
 
-function fergcorp_flickrShortcode_init(){
-	global $fergcorp_flickrShortcode_apiKey;
-	require_once("phpFlickr.php");
-	$f = new phpFlickr($fergcorp_flickrShortcode_apiKey);
-	$f->enableCache("fs", dirname(__FILE__)."/phpFlickrCache", 15552000);
-	return $f;
-}
+
 
 
 
@@ -215,8 +226,18 @@ function fergcorp_flickrShortcode_shortcode($atts, $content) {
 	
 	return "<p>" . fergcorp_flickrShortcode($content) . "</p>";
 }
-
 add_shortcode('flickr', 'fergcorp_flickrShortcode_shortcode');
+
+function fergcorp_flickrShortcode_shortcode_set($atts, $content) {
+	extract(shortcode_atts(array(
+		"blah" => 'countdown-timer',
+	), $atts));
+
+	$content = do_shortcode($content);
+
+	return fergcorp_flickrShortcode_set($content);
+}
+add_shortcode('flickr_set', 'fergcorp_flickrShortcode_shortcode_set');
 
 
 add_action('admin_print_scripts', 'fergcorp_flickrShortcode_quicktagJS');
