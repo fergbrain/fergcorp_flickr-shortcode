@@ -44,7 +44,7 @@ $fergcorp_flickrShortcode_apiKey = "bc5cb4b74f2028637db9c4a36f9bdb01";
 function fergcorp_flickrShortcode($photoID, $size = "medium"){
 	global $fergcorp_flickrShortcode_apiKey;
 	
-	require_once("phpFlickr.php");
+	require_once("phpFlickr/phpFlickr.php");
 	
 	$f = new phpFlickr($fergcorp_flickrShortcode_apiKey);
 	
