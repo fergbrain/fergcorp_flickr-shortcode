@@ -28,9 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 global $fergcorp_flickrShortcode_apiKey, $fergcorp_flickrShortcode_f;
 
-$fergcorp_flickrShortcode_apiKey = "bc5cb4b74f2028637db9c4a36f9bdb01";
-
-
 /**
  * Processes the wppd shortcode
  *
@@ -44,6 +41,7 @@ $fergcorp_flickrShortcode_apiKey = "bc5cb4b74f2028637db9c4a36f9bdb01";
 
 function fergcorp_flickrShortcode_init(){
 	global $fergcorp_flickrShortcode_apiKey, $fergcorp_flickrShortcode_f;
+	require_once("fergcorp_flickr-shortcode_key.php");
 	require_once("phpFlickr/phpFlickr.php");
 	$fergcorp_flickrShortcode_f = new phpFlickr($fergcorp_flickrShortcode_apiKey);
 	$fergcorp_flickrShortcode_f->enableCache("fs", dirname(__FILE__)."/phpFlickrCache", 15552000);
