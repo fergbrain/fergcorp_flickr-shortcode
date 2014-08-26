@@ -93,19 +93,19 @@ function fergcorp_flickrShortcode($photoID, $size = "medium"){
 	
 	
 	if(isset($exif['FocalLength'])){
-		$exifData .= $exif['FocalLength'] . " || ";
+		$exifData .= $exif['FocalLength']['_content'] . " || ";
 	}
 	if(isset($exif['ExposureTime'])){
-		$exifData .= $exif['ExposureTime'] . " ". (floatval($exif['ExposureTime'])>1?"sec ":NULL) ."|| ";
+		$exifData .= $exif['ExposureTime']['_content'] . " ". (floatval($exif['ExposureTime']['_content'])>1?"sec ":NULL) ."|| ";
 	}
 	if(isset($exif['FNumber'])){
-		$exifData .= "f/" . $exif['FNumber'] . " || ";
+		$exifData .= "f/" . $exif['FNumber']['_content'] . " || ";
 	}
 	if(isset($exif['ISO'])){
-		$exifData .= "ISO" . $exif['ISO'] . " || ";
+		$exifData .= "ISO" . $exif['ISO']['_content'] . " || ";
 	}
 	if(isset($exif['Model'])){
-		$exifData .= $exif['Model'] . " || ";
+		$exifData .= $exif['Model']['_content'] . " || ";
 	}
 
 	$exifData = rtrim($exifData, " || ");
