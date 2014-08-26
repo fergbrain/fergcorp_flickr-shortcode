@@ -3,7 +3,7 @@
 Plugin Name: Flickr Shortcode
 Plugin URI: http://andrewferguson.net/
 Description: Provides quick access a la short codes for inserting flickr photos
-Version: 0.2
+Version: 0.3
 Author: Andrew Ferguson
 Author URI: http://andrewferguson.net
 
